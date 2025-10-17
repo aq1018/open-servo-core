@@ -57,6 +57,9 @@ const TS_CAL2_ADDR: u32 = 0x1FFFF7C2;
 // const RCC_HSE_CLOCK_HZ: u32 = 16_000_000;
 const RCC_SYSCLK_HZ: u32 = 72_000_000;
 
+// ADC parameters
+const ADC_MAX_VALUE: f32 = 4095.0; // 12-bit ADC
+
 // Current sense parameters
 const ISENSE_AIPROPI: f32 = 1500.0; // uA/A
 const ISENSE_RESISTOR_OHM: f32 = 2200.0; // Ohm
@@ -221,11 +224,11 @@ fn convert_temperature(adc_value: u16, vdda_value: f32) -> f32 {
     let ts_cal2: u16 = unsafe { core::ptr::read(TS_CAL2_ADDR as *const u16) };
     let ts_cal1_temp: f32 = 30.0;
     let ts_cal2_temp: f32 = 110.0;
-    let ts_cal1_voltage: f32 = 3.3 * ts_cal1 as f32 / 4095.0;
-    let ts_cal2_voltage: f32 = 3.3 * ts_cal2 as f32 / 4095.0;
+    let ts_cal1_voltage: f32 = 3.3 * ts_cal1 as f32 / ADC_MAX_VALUE;
+    let ts_cal2_voltage: f32 = 3.3 * ts_cal2 as f32 / ADC_MAX_VALUE;
     let ts_slope: f32 = (ts_cal2_temp - ts_cal1_temp) / (ts_cal2_voltage - ts_cal1_voltage);
     let ts_offset: f32 = ts_cal1_temp - ts_slope * ts_cal1_voltage;
-    let temp_voltage = vdda_value * adc_value as f32 / 4095.0;
+    let temp_voltage = vdda_value * adc_value as f32 / ADC_MAX_VALUE;
     let temp = ts_slope * temp_voltage + ts_offset;
     return temp;
 }
@@ -237,7 +240,7 @@ fn convert_vdda(adc_value: u16) -> f32 {
 }
 
 fn convert_voltage(adc_value: u16, vdda_value: f32) -> f32 {
-    vdda_value * adc_value as f32 / PWM_MAX_DUTY as f32
+    vdda_value * adc_value as f32 / ADC_MAX_VALUE
 }
 
 fn convert_current(adc_value: u16, vdda_value: f32) -> f32 {

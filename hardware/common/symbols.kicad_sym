@@ -1,364 +1,754 @@
-(kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)
-  (symbol "DRV8231ADSGR" (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
-    (property "Reference" "U" (at 22.86 12.7 0)
-      (effects (font (size 1.524 1.524)))
-    )
-    (property "Value" "DRV8231ADSGR" (at 22.86 10.16 0)
-      (effects (font (size 1.524 1.524)))
-    )
-    (property "Footprint" "WSON8_DSG_TEX" (at 22.86 8.636 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (property "Datasheet" "" (at 0 0 0)
-      (effects (font (size 1.524 1.524)))
-    )
-    (property "ki_locked" "" (at 0 0 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "ki_fp_filters" "WSON8_DSG_TEX WSON8_DSG_TEX-M WSON8_DSG_TEX-L" (at 0 0 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (symbol "DRV8231ADSGR_1_1"
-      (polyline
-        (pts
-          (xy 7.62 -30.48)
-          (xy 38.1 -30.48)
-        )
-        (stroke (width 0.127) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 7.62 7.62)
-          (xy 7.62 -30.48)
-        )
-        (stroke (width 0.127) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 38.1 -30.48)
-          (xy 38.1 7.62)
-        )
-        (stroke (width 0.127) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 38.1 7.62)
-          (xy 7.62 7.62)
-        )
-        (stroke (width 0.127) (type default))
-        (fill (type none))
-      )
-      (pin power_in line (at 0 -12.7 0) (length 7.62)
-        (name "IPROPI" (effects (font (size 1.4986 1.4986))))
-        (number "1" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin input line (at 0 0 0) (length 7.62)
-        (name "IN2" (effects (font (size 1.4986 1.4986))))
-        (number "2" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin input line (at 0 -2.54 0) (length 7.62)
-        (name "IN1" (effects (font (size 1.4986 1.4986))))
-        (number "3" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin power_in line (at 0 -17.78 0) (length 7.62)
-        (name "VREF" (effects (font (size 1.4986 1.4986))))
-        (number "4" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin power_in line (at 0 -15.24 0) (length 7.62)
-        (name "VM" (effects (font (size 1.4986 1.4986))))
-        (number "5" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin output line (at 45.72 2.54 180) (length 7.62)
-        (name "OUT1" (effects (font (size 1.4986 1.4986))))
-        (number "6" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin power_in line (at 0 -25.4 0) (length 7.62)
-        (name "GND" (effects (font (size 1.4986 1.4986))))
-        (number "7" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin output line (at 45.72 0 180) (length 7.62)
-        (name "OUT2" (effects (font (size 1.4986 1.4986))))
-        (number "8" (effects (font (size 1.4986 1.4986))))
-      )
-      (pin power_in line (at 0 -22.86 0) (length 7.62)
-        (name "EPAD" (effects (font (size 1.4986 1.4986))))
-        (number "9" (effects (font (size 1.4986 1.4986))))
-      )
-    )
-  )
-  (symbol "ITR1204SR10A_TR(BY)" (in_bom yes) (on_board yes)
-    (property "Reference" "U" (at 0 3.81 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Value" "ITR1204SR10A_TR(BY)" (at 0 -2.54 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "open-servo-controller:OPTO-SMD-4_ITR1204SR10A" (at 0 -10.16 0)
-      (effects (font (size 1.27 1.27) italic) hide)
-    )
-    (property "Datasheet" "https://item.szlcsc.com/481858.html?ref=editor&logined=true" (at -26.67 -5.08 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "LCSC" "C475373" (at 0 8.89 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "ki_keywords" "C475373" (at 0 0 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (symbol "ITR1204SR10A_TR(BY)_0_1"
-      (polyline
-        (pts
-          (xy -2.667 2.413)
-          (xy -3.81 1.27)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -2.667 2.667)
-          (xy -3.81 3.81)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -2.032 4.191)
-          (xy -1.524 4.318)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -1.778 5.461)
-          (xy 2.413 5.461)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -1.651 3.429)
-          (xy -1.143 3.556)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -1.27 5.461)
-          (xy -1.524 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -0.762 5.461)
-          (xy -1.016 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -0.254 5.461)
-          (xy -0.508 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 0.254 5.461)
-          (xy 0 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 0.762 5.461)
-          (xy 0.508 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.143 4.445)
-          (xy 1.27 3.937)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.27 5.461)
-          (xy 1.016 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.524 5.207)
-          (xy 1.651 4.699)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.778 5.461)
-          (xy 1.524 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 2.286 5.461)
-          (xy 2.032 5.715)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 3.81 1.905)
-          (xy 2.54 1.905)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -3.81 1.27)
-          (xy -3.81 0)
-          (xy -5.08 0)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -3.81 3.81)
-          (xy -3.81 5.08)
-          (xy -5.08 5.08)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -2.667 3.556)
-          (xy -2.667 1.524)
-          (xy -2.667 1.524)
-        )
-        (stroke (width 0.3556) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -1.016 5.207)
-          (xy -2.032 4.191)
-          (xy -1.905 4.699)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -0.635 4.445)
-          (xy -1.651 3.429)
-          (xy -1.524 3.937)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 2.159 3.429)
-          (xy 1.143 4.445)
-          (xy 1.651 4.318)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 2.54 4.191)
-          (xy 1.524 5.207)
-          (xy 2.032 5.08)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy -3.683 1.397)
-          (xy -3.429 1.905)
-          (xy -3.175 1.651)
-          (xy -3.683 1.397)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 3.175 1.905)
-          (xy 3.81 3.175)
-          (xy 2.54 3.175)
-          (xy 3.175 1.905)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 5.08 0)
-          (xy 3.175 0)
-          (xy 3.175 5.08)
-          (xy 5.08 5.08)
-        )
-        (stroke (width 0) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 5.08 -1.27)
-          (xy -5.08 -1.27)
-          (xy -5.08 6.35)
-          (xy 5.08 6.35)
-          (xy 5.08 -1.27)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type background))
-      )
-    )
-    (symbol "ITR1204SR10A_TR(BY)_1_1"
-      (pin open_collector line (at -7.62 5.08 0) (length 2.54)
-        (name "~" (effects (font (size 1.27 1.27))))
-        (number "1" (effects (font (size 1.27 1.27))))
-      )
-      (pin open_emitter line (at -7.62 0 0) (length 2.54)
-        (name "~" (effects (font (size 1.27 1.27))))
-        (number "2" (effects (font (size 1.27 1.27))))
-      )
-      (pin passive line (at 7.62 5.08 180) (length 2.54)
-        (name "A" (effects (font (size 1.27 1.27))))
-        (number "3" (effects (font (size 1.27 1.27))))
-      )
-      (pin passive line (at 7.62 0 180) (length 2.54)
-        (name "K" (effects (font (size 1.27 1.27))))
-        (number "4" (effects (font (size 1.27 1.27))))
-      )
-    )
-  )
+(kicad_symbol_lib
+	(version 20241209)
+	(generator "kicad_symbol_editor")
+	(generator_version "9.0")
+	(symbol "DRV8231ADSGR"
+		(pin_names
+			(offset 0.254)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(property "Reference" "U"
+			(at 22.86 12.7 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Value" "DRV8231ADSGR"
+			(at 22.86 10.16 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Footprint" "WSON8_DSG_TEX"
+			(at 22.86 8.636 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "ki_locked" ""
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "WSON8_DSG_TEX WSON8_DSG_TEX-M WSON8_DSG_TEX-L"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(symbol "DRV8231ADSGR_1_1"
+			(polyline
+				(pts
+					(xy 7.62 7.62) (xy 7.62 -30.48)
+				)
+				(stroke
+					(width 0.127)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 7.62 -30.48) (xy 38.1 -30.48)
+				)
+				(stroke
+					(width 0.127)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 38.1 7.62) (xy 7.62 7.62)
+				)
+				(stroke
+					(width 0.127)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 38.1 -30.48) (xy 38.1 7.62)
+				)
+				(stroke
+					(width 0.127)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(pin input line
+				(at 0 0 0)
+				(length 7.62)
+				(name "IN2"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin input line
+				(at 0 -2.54 0)
+				(length 7.62)
+				(name "IN1"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin power_in line
+				(at 0 -12.7 0)
+				(length 7.62)
+				(name "IPROPI"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin power_in line
+				(at 0 -15.24 0)
+				(length 7.62)
+				(name "VM"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "5"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin power_in line
+				(at 0 -17.78 0)
+				(length 7.62)
+				(name "VREF"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "4"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin power_in line
+				(at 0 -22.86 0)
+				(length 7.62)
+				(name "EPAD"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "9"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin power_in line
+				(at 0 -25.4 0)
+				(length 7.62)
+				(name "GND"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "7"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin output line
+				(at 45.72 2.54 180)
+				(length 7.62)
+				(name "OUT1"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "6"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+			(pin output line
+				(at 45.72 0 180)
+				(length 7.62)
+				(name "OUT2"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+				(number "8"
+					(effects
+						(font
+							(size 1.4986 1.4986)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+	(symbol "ITR1204SR10A_TR(BY)"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(property "Reference" "U"
+			(at 0 3.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "ITR1204SR10A_TR(BY)"
+			(at 0 -2.54 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "open-servo-controller:OPTO-SMD-4_ITR1204SR10A"
+			(at 0 -10.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://item.szlcsc.com/481858.html?ref=editor&logined=true"
+			(at -26.67 -5.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C475373"
+			(at 0 8.89 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "ki_keywords" "C475373"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(symbol "ITR1204SR10A_TR(BY)_0_1"
+			(polyline
+				(pts
+					(xy -3.81 3.81) (xy -3.81 5.08) (xy -5.08 5.08)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -3.81 1.27) (xy -3.81 0) (xy -5.08 0)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -3.683 1.397) (xy -3.429 1.905) (xy -3.175 1.651) (xy -3.683 1.397)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -2.667 3.556) (xy -2.667 1.524) (xy -2.667 1.524)
+				)
+				(stroke
+					(width 0.3556)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -2.667 2.667) (xy -3.81 3.81)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -2.667 2.413) (xy -3.81 1.27)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -2.032 4.191) (xy -1.524 4.318)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.778 5.461) (xy 2.413 5.461)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.651 3.429) (xy -1.143 3.556)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.27 5.461) (xy -1.524 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.016 5.207) (xy -2.032 4.191) (xy -1.905 4.699)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.762 5.461) (xy -1.016 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.635 4.445) (xy -1.651 3.429) (xy -1.524 3.937)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.254 5.461) (xy -0.508 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0.254 5.461) (xy 0 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0.762 5.461) (xy 0.508 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.143 4.445) (xy 1.27 3.937)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.27 5.461) (xy 1.016 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.524 5.207) (xy 1.651 4.699)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.778 5.461) (xy 1.524 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.159 3.429) (xy 1.143 4.445) (xy 1.651 4.318)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.286 5.461) (xy 2.032 5.715)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.54 4.191) (xy 1.524 5.207) (xy 2.032 5.08)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 3.175 1.905) (xy 3.81 3.175) (xy 2.54 3.175) (xy 3.175 1.905)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 3.81 1.905) (xy 2.54 1.905)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 5.08 0) (xy 3.175 0) (xy 3.175 5.08) (xy 5.08 5.08)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 5.08 -1.27) (xy -5.08 -1.27) (xy -5.08 6.35) (xy 5.08 6.35) (xy 5.08 -1.27)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+		)
+		(symbol "ITR1204SR10A_TR(BY)_1_1"
+			(pin passive line
+				(at -7.62 5.08 0)
+				(length 2.54)
+				(name "~"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -7.62 0 0)
+				(length 2.54)
+				(name "~"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 5.08 180)
+				(length 2.54)
+				(name "A"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 0 180)
+				(length 2.54)
+				(name "K"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "4"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
 )

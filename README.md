@@ -1,6 +1,6 @@
 # open-servo-core
 
-Transform cheap MG90S servos into smart DYNAMIXEL-style actuators
+Democratize Robotics For Everyone
 
 ## Overview
 

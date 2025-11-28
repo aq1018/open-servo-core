@@ -4,7 +4,7 @@ Democratize Robotics For Everyone
 
 ## Overview
 
-This project aims to create a drop-in replacement control board for MG90S/MG90D servos that adds cascade control, current sensing, and a DYNAMIXEL-style serial protocol. The goal is to make robotics more accessible by turning a $2.50 servo into a $5 smart actuator (vs $30+ for commercial alternatives). Built with bare-metal Rust on STM32/CH32V microcontrollers.
+This project aims to create a drop-in replacement control board for MG90-class servos that adds cascade control, current sensing, and a DYNAMIXEL-style serial protocol. The goal is to make robotics more accessible by turning a $2.50 servo into a $5 smart actuator (vs $30+ for commercial alternatives). Built with bare-metal Rust on STM32/CH32V microcontrollers.
 
 ## Project Status
 

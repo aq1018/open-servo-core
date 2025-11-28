@@ -35,7 +35,7 @@
   (pad "2" smd rect (at 0.400051 0.664973 90) (size 0.8 0.550013) (layers "F.Cu" "F.Paste" "F.Mask") (tstamp d352b03d-eb06-4573-9778-6fae2303e5cc))
   (pad "3" smd rect (at 0.400051 -0.664973 90) (size 0.8 0.550013) (layers "F.Cu" "F.Paste" "F.Mask") (tstamp ffa15e6e-e2c9-458d-a7f1-f94412d48464))
   (pad "4" smd rect (at -0.399797 -0.664973 90) (size 0.8 0.550013) (layers "F.Cu" "F.Paste" "F.Mask") (tstamp 898ba88d-941c-461e-b4d4-0119ff59dff5))
-  (model "/Users/aaron/projects/open-servo-controller/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
+  (model "/Users/aaron/projects/open-servo-core/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
     (offset (xyz 0.000051 0.000025 0.6))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))

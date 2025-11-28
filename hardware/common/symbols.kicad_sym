@@ -302,7 +302,7 @@
 				)
 			)
 		)
-		(property "Footprint" "open-servo-controller:OPTO-SMD-4_ITR1204SR10A"
+		(property "Footprint" "open-servo-core:OPTO-SMD-4_ITR1204SR10A"
 			(at 0 -10.16 0)
 			(effects
 				(font

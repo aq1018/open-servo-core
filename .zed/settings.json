@@ -6,7 +6,7 @@
           "allTargets": false,
           "targets": "thumbv7em-none-eabihf"
         },
-        "linkedProjects": ["firmware/open-servo-controller/Cargo.toml"]
+        "linkedProjects": ["firmware/open-servo-core/Cargo.toml"]
       }
     }
   },

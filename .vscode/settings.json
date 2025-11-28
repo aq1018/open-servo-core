@@ -1,6 +1,6 @@
 {
   "rust-analyzer.check.allTargets": false,
   "rust-analyzer.check.targets": "thumbv7em-none-eabihf",
-  "rust-analyzer.linkedProjects": ["firmware/open-servo-controller/Cargo.toml"],
+  "rust-analyzer.linkedProjects": ["firmware/open-servo-core/Cargo.toml"],
   "cSpell.enabled": false
 }

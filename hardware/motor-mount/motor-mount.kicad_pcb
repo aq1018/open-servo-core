@@ -147,7 +147,7 @@
     )
   )
 
-  (footprint "open-servo-controller:SG90_Motor" (layer "F.Cu")
+  (footprint "open-servo-core:SG90_Motor" (layer "F.Cu")
     (tstamp 87ef4d5f-7c7f-4aea-92fb-75cb6c3c9675)
     (at 30.79 24.328)
     (property "Sheetfile" "motor-mount.kicad_sch")

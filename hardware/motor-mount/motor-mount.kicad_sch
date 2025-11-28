@@ -1047,7 +1047,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "open-servo-controller:SG90_Motor"
+		(property "Footprint" "open-servo-core:SG90_Motor"
 			(at 170.18 101.346 0)
 			(effects
 				(font

@@ -1,4 +1,4 @@
 (sym_lib_table
   (version 7)
-  (lib (name "open-servo-controller")(type "KiCad")(uri "${KIPRJMOD}/../common/symbols.kicad_sym")(options "")(descr ""))
+  (lib (name "open-servo-core")(type "KiCad")(uri "${KIPRJMOD}/../common/symbols.kicad_sym")(options "")(descr ""))
 )

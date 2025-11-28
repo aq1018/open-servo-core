@@ -1968,7 +1968,7 @@
 			)
 		)
 	)
-	(footprint "open-servo-controller:OPTO-SMD-4_ITR1204SR10A"
+	(footprint "open-servo-core:OPTO-SMD-4_ITR1204SR10A"
 		(layer "B.Cu")
 		(uuid "6114bbbf-28ee-4376-ac08-1bdd1cf64328")
 		(at 114 105)
@@ -2158,7 +2158,7 @@
 			(uuid "59dbc68b-e32e-409e-84dd-89270541bee7")
 		)
 		(embedded_fonts no)
-		(model "/Users/aaronqian/projects/electronics/open-servo-controller/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
+		(model "/Users/aaron/projects/open-servo-core/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
 			(offset
 				(xyz 0.000051 0.000025 0.6)
 			)
@@ -2170,7 +2170,7 @@
 			)
 		)
 	)
-	(footprint "open-servo-controller:OPTO-SMD-4_ITR1204SR10A"
+	(footprint "open-servo-core:OPTO-SMD-4_ITR1204SR10A"
 		(layer "B.Cu")
 		(uuid "dc8f6c05-9457-4323-935a-a8e66b664da1")
 		(at 111 105)
@@ -2360,7 +2360,7 @@
 			(uuid "e8fcb5d4-1023-4952-a892-fb87d8b7d694")
 		)
 		(embedded_fonts no)
-		(model "/Users/aaronqian/projects/electronics/open-servo-controller/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
+		(model "/Users/aaron/projects/open-servo-core/hardware/common/3DModels/OPTO-SMD-4_ITR1204SR10A.step"
 			(offset
 				(xyz 0.000051 0.000025 0.6)
 			)

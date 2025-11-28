@@ -40,11 +40,6 @@ hardware/
 - Keep total cost under $5 per modified servo
 - Require no mechanical modifications to the servo
 
-## More Information
-
-- [Full project details and architecture](https://aaronyu.dev/projects/openservocore) - Detailed rationale, design decisions, and technical approach
-- [Development logs](https://aaronyu.dev/projects/openservocore#logs) - Build progress and experiments
-
 ## Contributing
 
 This is experimental research code in active development. Issues and discussions are welcome. Check the hardware folders for KiCad designs and the firmware folder for the Rust implementation.

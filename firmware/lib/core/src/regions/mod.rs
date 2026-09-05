@@ -90,6 +90,7 @@ impl ControlTableCell {
             cfg.loop_current.duty_max_q15 = config::DEFAULT_DUTY_MAX_Q15;
             cfg.loop_position.velocity_limit_cps = config::DEFAULT_VELOCITY_LIMIT_CPS;
             cfg.loop_position.accel_limit_q88 = config::DEFAULT_ACCEL_LIMIT_Q88;
+            cfg.loop_position.pos_deadband_counts = config::DEFAULT_POS_DEADBAND_COUNTS;
             cfg.limits.current_limit_counts = config::DEFAULT_CURRENT_LIMIT_COUNTS;
             cfg.limits.drive_polarity = config::DEFAULT_DRIVE_POLARITY;
             cfg.limits.stall_omega_max_cps = config::DEFAULT_STALL_OMEGA_MAX_CPS;

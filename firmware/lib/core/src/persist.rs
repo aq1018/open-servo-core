@@ -41,7 +41,7 @@ pub const CALIB_IMAGE_LEN: usize = HEADER_LEN + CALIB_LEN;
 pub const IMAGE_MAGIC: u8 = b'C';
 /// Bump on any CONFIG/PROFILE layout change; a mismatched image is ignored
 /// (boot keeps board defaults) rather than migrated.
-pub const IMAGE_VERSION: u8 = 2;
+pub const IMAGE_VERSION: u8 = 3;
 
 pub const CALIB_IMAGE_MAGIC: u8 = b'K';
 /// Bump on any CALIB layout change; independent of [`IMAGE_VERSION`].

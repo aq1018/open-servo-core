@@ -159,36 +159,29 @@
       "kind": "uint"
     },
     {
-      "name": "hold_omega_cps",
+      "name": "velocity_limit_cps",
       "addr": 68,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
-      "name": "velocity_limit_cps",
+      "name": "accel_limit_q88",
       "addr": 70,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
-      "name": "accel_limit_q88",
+      "name": "current_limit_counts",
       "addr": 72,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
-      "name": "current_limit_counts",
-      "addr": 74,
-      "width": 2,
-      "access": "rw",
-      "kind": "uint"
-    },
-    {
       "name": "stall_response",
-      "addr": 76,
+      "addr": 74,
       "width": 1,
       "access": "rw",
       "kind": "enum",
@@ -205,63 +198,63 @@
     },
     {
       "name": "drive_polarity",
-      "addr": 77,
+      "addr": 75,
       "width": 1,
       "access": "rw",
       "kind": "bool"
     },
     {
       "name": "stall_omega_max_cps",
-      "addr": 78,
+      "addr": 76,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "stall_time_ms",
-      "addr": 80,
+      "addr": 78,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "stall_yield_counts",
-      "addr": 82,
+      "addr": 80,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "stall_release_counts",
-      "addr": 84,
+      "addr": 82,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "stall_tau_trip_counts",
-      "addr": 86,
+      "addr": 84,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "oc_trip_counts",
-      "addr": 88,
+      "addr": 86,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "oc_trip_ticks",
-      "addr": 90,
+      "addr": 88,
       "width": 1,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "openloop_decay",
-      "addr": 91,
+      "addr": 89,
       "width": 1,
       "access": "rw",
       "kind": "enum",
@@ -278,98 +271,98 @@
     },
     {
       "name": "derate_start_cc",
-      "addr": 92,
+      "addr": 90,
       "width": 2,
       "access": "rw",
       "kind": "int"
     },
     {
       "name": "cutoff_cc",
-      "addr": 94,
+      "addr": 92,
       "width": 2,
       "access": "rw",
       "kind": "int"
     },
     {
       "name": "recover_cc",
-      "addr": 96,
+      "addr": 94,
       "width": 2,
       "access": "rw",
       "kind": "int"
     },
     {
       "name": "v_undervolt_counts",
-      "addr": 98,
+      "addr": 96,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "rtherm_i_min_counts",
-      "addr": 100,
+      "addr": 98,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "rtherm_omega_max_cps",
-      "addr": 102,
+      "addr": 100,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "l1_q016",
-      "addr": 104,
+      "addr": 102,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "l2_q88",
-      "addr": 106,
+      "addr": 104,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "l3_q88",
-      "addr": 108,
+      "addr": 106,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "l_bemf_q016",
-      "addr": 110,
+      "addr": 108,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "pos_error_counts",
-      "addr": 112,
+      "addr": 110,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "pos_error_time_ms",
-      "addr": 114,
+      "addr": 112,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "sensor_delta_max",
-      "addr": 116,
+      "addr": 114,
       "width": 2,
       "access": "rw",
       "kind": "uint"
     },
     {
       "name": "sensor_bad_count",
-      "addr": 118,
+      "addr": 116,
       "width": 1,
       "access": "rw",
       "kind": "uint"

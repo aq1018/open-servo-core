@@ -357,14 +357,12 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
                         let pc = PositionCfg {
                             kp_q88: loop_pos.p_kp_q88,
                             pos_deadband_counts: loop_pos.pos_deadband_counts,
-                            hold_omega_cps: loop_pos.hold_omega_cps,
                             vel_limit_cps: loop_pos.velocity_limit_cps,
                         };
                         let out = position::step(
                             self.traj.theta_star_q16(),
                             self.traj.omega_star_q16(),
                             theta_hat,
-                            omega_hat,
                             &pc,
                         );
                         self.omega_ref_q16 = out.omega_ref_q16;
@@ -411,6 +409,17 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
 
             if run {
                 match life.mode {
+                    // Parked: the drive coasts, so the velocity loop must stop
+                    // too. omega_hat is pot-noise driven at rest (+-hundreds
+                    // c/s); left running, the PI integrates that phantom error
+                    // until i_ref pins at the current limit, and pinned + slow
+                    // false-trips the stall detector (bench: CODE_STALL a few
+                    // seconds into a clean hold). Zero the command and drain
+                    // the integrator so it never winds and resumes bumplessly.
+                    Mode::Position if self.hold => {
+                        self.i_ref_cc = 0;
+                        self.vel.reset();
+                    }
                     Mode::Velocity | Mode::Position => {
                         let vg = VelocityGains {
                             kp_q88: loop_vel.v_kp_q88,

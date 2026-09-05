@@ -78,7 +78,6 @@ fn seed(shared: &Shared) {
         c.loop_velocity.j_ff_q88 = 0;
         c.loop_position.p_kp_q88 = 256;
         c.loop_position.pos_deadband_counts = 8;
-        c.loop_position.hold_omega_cps = 200;
         c.loop_position.velocity_limit_cps = 3000;
         c.loop_position.accel_limit_q88 = 50 << 8;
         c.limits.current_limit_counts = 1200;
@@ -799,6 +798,103 @@ fn hard_wall_stall_faults() {
     assert!(matches!(last_cmd(&k), MotorCmd::Disabled));
     sh.table
         .with(|t| assert_eq!(t.telemetry.mode.fault_code, faults::CODE_STALL));
+}
+
+#[test]
+fn hold_parks_releases_and_reparks() {
+    let sh = Shared::new();
+    seed(&sh);
+    sh.table.with_mut(|t| {
+        t.control.lifecycle.torque_enable = true;
+        t.control.lifecycle.goal_position = 2000;
+        t.config.fault_cfg.pos_error_counts = u16::MAX;
+        t.config.fusion.l3_q88 = 256;
+        t.config.loop_position.p_kp_q88 = 1024;
+    });
+    let mut k = kernel();
+    let mut plant = Plant::new(1990);
+    run_plant(&mut k, &sh, &mut plant, 20_000);
+    assert!(matches!(last_cmd(&k), MotorCmd::Coast), "never parked");
+    assert_eq!(k.faults.mask(), 0);
+    // a goal write releases the park (omega_star != 0 drops hold); the whole
+    // commanded move must run without a single Coast, then it re-parks once
+    // the profile lands inside the deadband
+    sh.table
+        .with_mut(|t| t.control.lifecycle.goal_position = 2100);
+    let mut saw_move = false;
+    let mut reparked = false;
+    for _ in 0..20_000u32 {
+        run_plant(&mut k, &sh, &mut plant, 1);
+        let moving = k.traj.omega_star_q16() != 0;
+        if moving {
+            saw_move = true;
+            assert!(!matches!(last_cmd(&k), MotorCmd::Coast), "coast mid-move");
+        }
+        if saw_move && !moving && matches!(last_cmd(&k), MotorCmd::Coast) {
+            reparked = true;
+        }
+    }
+    assert!(saw_move, "goal write never started the profile");
+    assert!(reparked, "never re-parked after the move");
+    assert_eq!(k.faults.mask(), 0);
+    // an external push out of the deadband wakes the park, then it re-parks
+    plant.theta_q16 -= 60i64 << 16;
+    let mut woke = false;
+    for _ in 0..2000 {
+        run_plant(&mut k, &sh, &mut plant, 1);
+        woke |= !matches!(last_cmd(&k), MotorCmd::Coast);
+    }
+    assert!(woke, "push never woke the hold");
+    let mut coast = 0u32;
+    for _ in 0..30_000 {
+        run_plant(&mut k, &sh, &mut plant, 1);
+        if matches!(last_cmd(&k), MotorCmd::Coast) {
+            coast += 1;
+        }
+    }
+    assert!(
+        coast > 15_000,
+        "never re-parked after the push: coast {coast}"
+    );
+    assert_eq!(k.faults.mask(), 0);
+    assert!((plant.pos() - 2100).abs() <= 16, "rest {}", plant.pos());
+}
+
+#[test]
+fn hold_stays_parked_under_pot_noise() {
+    let sh = Shared::new();
+    seed(&sh);
+    sh.table.with_mut(|t| {
+        t.control.lifecycle.torque_enable = true;
+        t.control.lifecycle.goal_position = 2000;
+        t.config.fault_cfg.pos_error_counts = u16::MAX;
+        t.config.fusion.l3_q88 = 256;
+        t.config.loop_position.p_kp_q88 = 1024;
+    });
+    let mut k = kernel();
+    let mut plant = Plant::new(1990);
+    run_plant(&mut k, &sh, &mut plant, 20_000);
+    assert!(matches!(last_cmd(&k), MotorCmd::Coast), "never parked");
+    // parked hold under +-3 counts of pot noise: gating on position rest
+    // (not the noisy omega_hat) keeps the park engaged - a wake per blip is
+    // the shake fix2 removes
+    let mut rng: u32 = 0xdead_beef;
+    let (mut coast, mut lo, mut hi) = (0u32, i32::MAX, i32::MIN);
+    for _ in 0..40_000 {
+        let mut f = plant.step(k.duty_q15);
+        rng = rng.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let n = ((rng >> 24) as i32 % 7) - 3;
+        f.pos = (f.pos as i32 + n).clamp(0, 4095) as u16;
+        k.on_tick(f, &sh);
+        if matches!(last_cmd(&k), MotorCmd::Coast) {
+            coast += 1;
+        }
+        lo = lo.min(plant.pos());
+        hi = hi.max(plant.pos());
+    }
+    assert_eq!(k.faults.mask(), 0);
+    assert!(hi - lo <= 4, "hold limit cycle: spread {}", hi - lo);
+    assert!(coast >= 36_000, "coast ticks {coast} of 40000");
 }
 
 #[test]

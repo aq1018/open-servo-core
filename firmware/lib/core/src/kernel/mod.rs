@@ -599,14 +599,20 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
                         // the frozen loop resumes bumplessly on exit
                         self.duty_q15 = 0;
                         MotorCmd::Coast
-                    } else if self.i_ref_cc == 0 && i_meas.is_none() {
-                        // zero ref with no window: the honest-zero feed
-                        // below makes e = 0, freezing the PI at whatever
-                        // sub-floor duty it unwound to - stalled at an
-                        // endstop that grinds the gears forever (bench:
-                        // 18% duty held into the rail). Zero duty is the
-                        // honest actuation; slow decay shorts the winding,
-                        // passively braking whatever momentum remains.
+                    } else if self.i_ref_cc == 0
+                        && i_meas.is_none()
+                        && (self.i_band.hi == 0 || self.i_band.lo == 0)
+                    {
+                        // endstop-clamped ref with no window: the
+                        // honest-zero feed below makes e = 0, freezing the
+                        // PI at whatever sub-floor duty it unwound to -
+                        // stalled at an endstop that grinds the gears
+                        // forever (bench: 18% duty held into the rail).
+                        // Zero duty is the honest actuation; slow decay
+                        // shorts the winding, passively braking whatever
+                        // momentum remains. Scoped to a collapsed band so a
+                        // transient i_ref zero crossing in normal travel
+                        // can never reset the loop mid-reversal.
                         self.cur.reset();
                         self.duty_q15 = 0;
                         self.decay = DecayMode::Slow;

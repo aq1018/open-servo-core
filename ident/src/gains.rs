@@ -17,6 +17,14 @@
 /// `--l-henries` default.
 pub const DEFAULT_L_HENRIES: f64 = 0.5e-3;
 
+/// Anti-hunt deadband policy. The deadband must exceed pot-noise excursions
+/// or the hold chatters (bench: 16 counts held clean at sigma 6.9 = 2.3
+/// sigma). Hold coasts on position rest alone (firmware position.rs), so the
+/// only synthesized field is the deadband; the floor keeps a suspiciously
+/// quiet E0 from synthesizing a deadband too tight to engage.
+const DEADBAND_SIGMA_MULT: f64 = 2.5;
+const DEADBAND_FLOOR_COUNTS: f64 = 4.0;
+
 /// SI inductance -> count domain. vcounts and ccounts share the ADC lsb
 /// (both channels reference VDD), so it cancels and only the front-end
 /// scales remain:
@@ -103,6 +111,9 @@ pub struct GainSet {
     /// Projected omega noise from the pot, c/s: l2 * sigma_theta per
     /// correct step - report fodder, not a table field.
     pub omega_noise_cps: f64,
+    /// Anti-hunt park window, counts: noise-derived lower bound (an
+    /// application may widen it for a softer, quieter hold).
+    pub pos_deadband: f64,
 }
 
 /// Pole placement.
@@ -166,6 +177,7 @@ pub fn synthesize(p: &PlantParams, t: &BwTargets) -> GainSet {
         fric_fv: p.fv,
         fric_breakaway: 0.0,
         omega_noise_cps: l2 * p.sigma_theta,
+        pos_deadband: (DEADBAND_SIGMA_MULT * p.sigma_theta).max(DEADBAND_FLOOR_COUNTS),
     }
 }
 
@@ -216,6 +228,7 @@ pub struct EncodedGains {
     pub v_kaw_q412: Encoded,
     pub j_ff_q88: Encoded,
     pub p_kp_q88: Encoded,
+    pub pos_deadband_counts: Encoded,
     pub l1_q016: Encoded,
     pub l2_q88: Encoded,
     pub l3_q88: Encoded,
@@ -231,7 +244,7 @@ pub struct EncodedGains {
 impl EncodedGains {
     /// (name, field) pairs in table-write order - the report and the CLI
     /// write-back both iterate this.
-    pub fn fields(&self) -> [(&'static str, Encoded); 18] {
+    pub fn fields(&self) -> [(&'static str, Encoded); 19] {
         [
             ("r_q12", self.r_q12),
             ("ke_vpc_q", self.ke_vpc_q),
@@ -248,6 +261,7 @@ impl EncodedGains {
             ("v_kaw_q412", self.v_kaw_q412),
             ("j_ff_q88", self.j_ff_q88),
             ("p_kp_q88", self.p_kp_q88),
+            ("pos_deadband_counts", self.pos_deadband_counts),
             ("l1_q016", self.l1_q016),
             ("l2_q88", self.l2_q88),
             ("l3_q88", self.l3_q88),
@@ -265,6 +279,7 @@ pub fn encode(g: &GainSet) -> EncodedGains {
         v_kaw_q412: enc(g.v_kaw, 4096.0),
         j_ff_q88: enc(g.j_ff, 256.0),
         p_kp_q88: enc(g.p_kp, 256.0),
+        pos_deadband_counts: enc(g.pos_deadband, 1.0),
         l1_q016: enc(g.l1, 65536.0),
         l2_q88: enc(g.l2, 256.0),
         l3_q88: enc(g.l3, 256.0),
@@ -345,6 +360,19 @@ mod tests {
         assert!(g.l1 > 0.05 && g.l1 < 0.5, "l1={}", g.l1);
         assert!(g.l2 > 1.0 && g.l2 < 50.0, "l2={}", g.l2);
         assert!(g.l3 > 0.1 && g.l3 < 20.0, "l3={}", g.l3);
+        // sigma 1.0: the deadband sits on its floor
+        assert_eq!(g.pos_deadband, DEADBAND_FLOOR_COUNTS);
+        // rig-scale noise: the noise-derived deadband clears the floor
+        let noisy = PlantParams {
+            sigma_theta: 6.9,
+            ..rig_plant()
+        };
+        let g = synthesize(&noisy, &BwTargets::default());
+        assert!(
+            (g.pos_deadband - 2.5 * 6.9).abs() < 1e-9,
+            "deadband={}",
+            g.pos_deadband
+        );
     }
 
     /// Mirror of estimator/fusion.rs (Q3.13 b_i coupling), integer-exact.

@@ -103,18 +103,29 @@ pub struct ConfigLoopVelocity {
     pub j_ff_q88: u16,
 }
 
-/// Position P gain, anti-hunt hold window, trajectory limits.
+/// Position P gain, anti-hunt hold deadband, trajectory limits.
 #[repr(C)]
 #[derive(Copy, Clone, Block)]
 pub struct ConfigLoopPosition {
     pub p_kp_q88: u16,
-    /// 0 = hold disabled.
+    /// 0 = hold disabled. Hold coasts on position rest alone (position.rs).
     pub pos_deadband_counts: u16,
-    pub hold_omega_cps: u16,
     pub velocity_limit_cps: u16,
     /// c/s per medium tick.
     pub accel_limit_q88: u16,
 }
+
+// Trajectory limits are clamps, not gains: at 0 the profile pins omega_ref
+// to 0 and velocity/position modes are inert even with live gains, so they
+// get real defaults (bench-validated on the SG90 rig: 1500 c/s, 15 c/s per
+// medium tick = 0 -> 1500 in 50 ms).
+pub const DEFAULT_VELOCITY_LIMIT_CPS: u16 = 1500;
+pub const DEFAULT_ACCEL_LIMIT_Q88: u16 = 3840;
+
+// Anti-hunt hold: at 0 the park never engages and the position loop chases
+// pot noise at rest (audible shake on the SG90 rig). Modest pot-noise-scale
+// backstop; identification refines it from the measured sigma_theta.
+pub const DEFAULT_POS_DEADBAND_COUNTS: u16 = 12;
 
 /// Current ceiling, stall policy, overcurrent trip window.
 #[repr(C)]
@@ -219,7 +230,7 @@ pub struct ConfigRegs {
     pub fusion: ConfigFusion,
     pub fault_cfg: ConfigFaultCfg,
     #[ct_section(skip)]
-    pub _rsvd_tail: [u8; 8],
+    pub _rsvd_tail: [u8; 10],
 }
 
 /// Boot-time seed for `ControlTable.config`; stamped pre-IRQ, then host-owned.

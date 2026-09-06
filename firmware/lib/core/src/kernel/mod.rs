@@ -323,7 +323,7 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
             // predicts torque-free.
             let i_use = i_meas.unwrap_or(self.i_ref_cc);
             let fg = FusionGains {
-                b_i_q016: motor_cal.b_i_q016,
+                b_i_q313: motor_cal.b_i_q313,
                 l1_q016: fus_cfg.l1_q016,
                 l2_q88: fus_cfg.l2_q88,
                 l3_q88: fus_cfg.l3_q88,
@@ -357,21 +357,19 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
                         let pc = PositionCfg {
                             kp_q88: loop_pos.p_kp_q88,
                             pos_deadband_counts: loop_pos.pos_deadband_counts,
-                            hold_omega_cps: loop_pos.hold_omega_cps,
                             vel_limit_cps: loop_pos.velocity_limit_cps,
                         };
                         let out = position::step(
                             self.traj.theta_star_q16(),
                             self.traj.omega_star_q16(),
                             theta_hat,
-                            omega_hat,
                             &pc,
                         );
                         self.omega_ref_q16 = out.omega_ref_q16;
                         self.hold = out.hold;
                     }
                     Mode::Velocity => {
-                        self.traj.step_velocity(life.goal_velocity, &tc);
+                        self.traj.step_velocity(life.goal_velocity, theta_hat, &tc);
                         self.omega_ref_q16 = self.traj.omega_star_q16();
                         self.hold = false;
                     }
@@ -411,6 +409,17 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
 
             if run {
                 match life.mode {
+                    // Parked: the drive coasts, so the velocity loop must stop
+                    // too. omega_hat is pot-noise driven at rest (+-hundreds
+                    // c/s); left running, the PI integrates that phantom error
+                    // until i_ref pins at the current limit, and pinned + slow
+                    // false-trips the stall detector (bench: CODE_STALL a few
+                    // seconds into a clean hold). Zero the command and drain
+                    // the integrator so it never winds and resumes bumplessly.
+                    Mode::Position if self.hold => {
+                        self.i_ref_cc = 0;
+                        self.vel.reset();
+                    }
                     Mode::Velocity | Mode::Position => {
                         let vg = VelocityGains {
                             kp_q88: loop_vel.v_kp_q88,
@@ -590,6 +599,27 @@ impl<I: ControlIo, T: TelStream> Kernel<I, T> {
                         // the frozen loop resumes bumplessly on exit
                         self.duty_q15 = 0;
                         MotorCmd::Coast
+                    } else if self.i_ref_cc == 0
+                        && i_meas.is_none()
+                        && (self.i_band.hi == 0 || self.i_band.lo == 0)
+                    {
+                        // endstop-clamped ref with no window: the
+                        // honest-zero feed below makes e = 0, freezing the
+                        // PI at whatever sub-floor duty it unwound to -
+                        // stalled at an endstop that grinds the gears
+                        // forever (bench: 18% duty held into the rail).
+                        // Zero duty is the honest actuation; slow decay
+                        // shorts the winding, passively braking whatever
+                        // momentum remains. Scoped to a collapsed band so a
+                        // transient i_ref zero crossing in normal travel
+                        // can never reset the loop mid-reversal.
+                        self.cur.reset();
+                        self.duty_q15 = 0;
+                        self.decay = DecayMode::Slow;
+                        MotorCmd::Drive {
+                            duty: Effort(0),
+                            decay: DecayMode::Slow,
+                        }
                     } else {
                         let gains = CurrentGains {
                             kp_q88: loop_cur.i_kp_q88,

@@ -15,10 +15,10 @@ use osc_ident::exp::resistance::DwellSample;
 use osc_ident::fits::{RungPoint, StepSeries};
 use osc_ident::frame::{TelFrame, TelemetrySnapshot};
 
-pub struct OutDir(pub PathBuf);
+pub(crate) struct OutDir(pub(crate) PathBuf);
 
 impl OutDir {
-    pub fn create(base: &Path) -> Result<Self> {
+    pub(crate) fn create(base: &Path) -> Result<Self> {
         let stamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs())
@@ -28,7 +28,7 @@ impl OutDir {
         Ok(Self(dir))
     }
 
-    pub fn file(&self, name: &str) -> Result<BufWriter<File>> {
+    pub(crate) fn file(&self, name: &str) -> Result<BufWriter<File>> {
         let p = self.0.join(name);
         Ok(BufWriter::new(
             File::create(&p).with_context(|| format!("create {}", p.display()))?,
@@ -37,12 +37,12 @@ impl OutDir {
 }
 
 /// Raw snapshot log: one row per Read, full field dump.
-pub struct SnapshotLog {
+pub(crate) struct SnapshotLog {
     w: BufWriter<File>,
 }
 
 impl SnapshotLog {
-    pub fn create(dir: &OutDir, name: &str) -> Result<Self> {
+    pub(crate) fn create(dir: &OutDir, name: &str) -> Result<Self> {
         let mut w = dir.file(name)?;
         writeln!(
             w,
@@ -55,7 +55,7 @@ impl SnapshotLog {
         Ok(Self { w })
     }
 
-    pub fn push(&mut self, host_ms: f64, s: &TelemetrySnapshot) -> Result<()> {
+    pub(crate) fn push(&mut self, host_ms: f64, s: &TelemetrySnapshot) -> Result<()> {
         writeln!(
             self.w,
             "{host_ms:.1},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
@@ -88,7 +88,7 @@ impl SnapshotLog {
     }
 }
 
-pub fn write_tel_frames(dir: &OutDir, name: &str, frames: &[TelFrame]) -> Result<()> {
+pub(crate) fn write_tel_frames(dir: &OutDir, name: &str, frames: &[TelFrame]) -> Result<()> {
     let mut w = dir.file(name)?;
     writeln!(w, "seq,window_valid,pos,current,duty_q15,vdiff")?;
     let opt = |v: Option<i32>| v.map(|v| v.to_string()).unwrap_or_default();
@@ -109,7 +109,7 @@ pub fn write_tel_frames(dir: &OutDir, name: &str, frames: &[TelFrame]) -> Result
 
 // --- derived fit inputs -----------------------------------------------------
 
-pub fn write_dwell_samples(dir: &OutDir, samples: &[DwellSample]) -> Result<()> {
+pub(crate) fn write_dwell_samples(dir: &OutDir, samples: &[DwellSample]) -> Result<()> {
     let mut w = dir.file("resistance.csv")?;
     writeln!(w, "dwell,dir,t_ms,i,vdiff,duty_q15")?;
     for s in samples {
@@ -122,7 +122,7 @@ pub fn write_dwell_samples(dir: &OutDir, samples: &[DwellSample]) -> Result<()> 
     Ok(())
 }
 
-pub fn read_dwell_samples(dir: &Path) -> Result<Vec<DwellSample>> {
+pub(crate) fn read_dwell_samples(dir: &Path) -> Result<Vec<DwellSample>> {
     let mut out = Vec::new();
     for parts in rows(&dir.join("resistance.csv"), 6)? {
         out.push(DwellSample {
@@ -139,7 +139,7 @@ pub fn read_dwell_samples(dir: &Path) -> Result<Vec<DwellSample>> {
     Ok(out)
 }
 
-pub fn write_rungs(dir: &OutDir, rungs: &[RungSummary]) -> Result<()> {
+pub(crate) fn write_rungs(dir: &OutDir, rungs: &[RungSummary]) -> Result<()> {
     let mut w = dir.file("rungs.csv")?;
     writeln!(w, "duty_q15,omega,omega_r2,i,v,windows,used,note")?;
     for r in rungs {
@@ -160,7 +160,7 @@ pub fn write_rungs(dir: &OutDir, rungs: &[RungSummary]) -> Result<()> {
 }
 
 /// Used rungs back as fit points (the unused ones only matter to humans).
-pub fn read_rung_points(dir: &Path) -> Result<Vec<RungPoint>> {
+pub(crate) fn read_rung_points(dir: &Path) -> Result<Vec<RungPoint>> {
     Ok(read_rungs(dir)?
         .iter()
         .filter(|r| r.used)
@@ -172,7 +172,7 @@ pub fn read_rung_points(dir: &Path) -> Result<Vec<RungPoint>> {
         .collect())
 }
 
-pub fn read_rungs(dir: &Path) -> Result<Vec<RungSummary>> {
+pub(crate) fn read_rungs(dir: &Path) -> Result<Vec<RungSummary>> {
     let mut out = Vec::new();
     for parts in rows(&dir.join("rungs.csv"), 8)? {
         out.push(RungSummary {
@@ -195,7 +195,7 @@ pub fn read_rungs(dir: &Path) -> Result<Vec<RungSummary>> {
 
 /// Long form, one row per sample; `src` tags tel/agg per step so the
 /// offline fit picks the same smoothing window the live one did.
-pub fn write_step_series(dir: &OutDir, series: &[(StepSeries, bool)]) -> Result<()> {
+pub(crate) fn write_step_series(dir: &OutDir, series: &[(StepSeries, bool)]) -> Result<()> {
     let mut w = dir.file("inertia_steps.csv")?;
     writeln!(w, "step,src,duty_q15,t,pos,i,mask")?;
     for (k, (s, tel)) in series.iter().enumerate() {
@@ -211,7 +211,7 @@ pub fn write_step_series(dir: &OutDir, series: &[(StepSeries, bool)]) -> Result<
     Ok(())
 }
 
-pub fn read_step_series(dir: &Path) -> Result<Vec<(StepSeries, bool)>> {
+pub(crate) fn read_step_series(dir: &Path) -> Result<Vec<(StepSeries, bool)>> {
     let mut out: Vec<(StepSeries, bool)> = Vec::new();
     let mut cur: Option<usize> = None;
     for parts in rows(&dir.join("inertia_steps.csv"), 7)? {

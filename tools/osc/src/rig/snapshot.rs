@@ -11,22 +11,22 @@ use osc_client::blocking::Client;
 use osc_client::nusb::NusbPipe;
 use osc_ident::regs::{ALL, Reg, calib, config};
 
-use super::params::GainJson;
 use super::pump::write_reg;
+use crate::ident::params::GainJson;
 
 /// name -> Reg for every writable field the gain set names.
-pub fn reg_by_name(name: &str) -> Option<Reg> {
+pub(crate) fn reg_by_name(name: &str) -> Option<Reg> {
     ALL.iter().find(|(n, _)| *n == name).map(|(_, r)| *r)
 }
 
 /// The write-set superset: everything snapshot/rollback/show handles.
-pub const SNAPSHOT_FIELDS: &[(&str, Reg)] = &[
+pub(crate) const SNAPSHOT_FIELDS: &[(&str, Reg)] = &[
     ("r_q12", calib::R_Q12),
     ("r0_q12", calib::R0_Q12),
     ("t0_cc", calib::T0_CC),
     ("ke_vpc_q", calib::KE_VPC_Q),
     ("recip_ke_q", calib::RECIP_KE_Q),
-    ("b_i_q016", calib::B_I_Q016),
+    ("b_i_q313", calib::B_I_Q313),
     ("fric_fc_counts", calib::FRIC_FC_COUNTS),
     ("fric_fv_q016", calib::FRIC_FV_Q016),
     ("fric_breakaway_counts", calib::FRIC_BREAKAWAY_COUNTS),
@@ -38,18 +38,19 @@ pub const SNAPSHOT_FIELDS: &[(&str, Reg)] = &[
     ("v_kaw_q412", config::V_KAW_Q412),
     ("j_ff_q88", config::J_FF_Q88),
     ("p_kp_q88", config::P_KP_Q88),
+    ("pos_deadband_counts", config::POS_DEADBAND_COUNTS),
     ("l1_q016", config::L1_Q016),
     ("l2_q88", config::L2_Q88),
     ("l3_q88", config::L3_Q88),
     ("l_bemf_q016", config::L_BEMF_Q016),
 ];
 
-pub fn read_u16(c: &mut Client<NusbPipe>, id: Id, reg: Reg) -> Result<u16> {
+pub(crate) fn read_u16(c: &mut Client<NusbPipe>, id: Id, reg: Reg) -> Result<u16> {
     let raw = c.read(id, reg.addr, 2).context("field read")?;
     Ok(u16::from_le_bytes([raw[0], raw[1]]))
 }
 
-pub fn take_snapshot(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()> {
+pub(crate) fn take_snapshot(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()> {
     let mut map = BTreeMap::new();
     for (name, reg) in SNAPSHOT_FIELDS {
         map.insert(name.to_string(), read_u16(c, id, *reg)?);
@@ -60,7 +61,7 @@ pub fn take_snapshot(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()
     Ok(())
 }
 
-pub fn rollback(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()> {
+pub(crate) fn rollback(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()> {
     let map: BTreeMap<String, u16> = serde_json::from_str(
         &std::fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?,
     )?;
@@ -78,7 +79,7 @@ pub fn rollback(c: &mut Client<NusbPipe>, id: Id, path: &Path) -> Result<()> {
 }
 
 /// Write the encoded set, read-back verifying each field.
-pub fn write_gains(c: &mut Client<NusbPipe>, id: Id, gains: &[GainJson]) -> Result<()> {
+pub(crate) fn write_gains(c: &mut Client<NusbPipe>, id: Id, gains: &[GainJson]) -> Result<()> {
     for g in gains {
         let reg =
             reg_by_name(&g.name).ok_or_else(|| anyhow::anyhow!("{}: not a known field", g.name))?;
@@ -95,7 +96,7 @@ pub fn write_gains(c: &mut Client<NusbPipe>, id: Id, gains: &[GainJson]) -> Resu
     Ok(())
 }
 
-pub fn show(c: &mut Client<NusbPipe>, id: Id) -> Result<()> {
+pub(crate) fn show(c: &mut Client<NusbPipe>, id: Id) -> Result<()> {
     for (name, reg) in SNAPSHOT_FIELDS {
         println!("{name:24} {}", read_u16(c, id, *reg)?);
     }

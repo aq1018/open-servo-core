@@ -27,6 +27,12 @@ pub(crate) const VEL_CAP_CPS: u16 = 32767;
 /// tick) at the 2 kHz MEDIUM rate.
 const SNAP_D_CQ16: u32 = 1 << 16;
 
+/// Velocity-mode wall ramp slope: 2^4 = 16 c/s of inward allowance per
+/// count of distance to a soft limit. Matches the decel the default limits
+/// can deliver (accel/vel = 30000/1500 = 20 /s); a hotter config just lags
+/// the ramp through the accel slew.
+const WALL_RAMP_SHIFT: u32 = 4;
+
 /// CONFIG loop_position profile fields + soft limits, loaded fresh each
 /// step by the kernel (`CurrentGains` convention). `dt_med_q32` =
 /// 2^32 / MED_HZ, the kernel's compile-time constant; MED_HZ > 2 keeps it
@@ -147,10 +153,30 @@ impl TrajGen {
     /// per tick. theta_ref keeps integrating - unused downstream in this
     /// mode, but a switch back to position mode then starts from a
     /// consistent pose.
-    pub fn step_velocity(&mut self, goal_velocity_cps: i32, cfg: &TrajCfg) {
+    ///
+    /// Soft-limit wall ramp: the goal's inward component is capped at
+    /// WALL_RAMP c/s per count of distance to the wall, reaching 0 at the
+    /// wall (and staying 0 past it - momentum only ever coasts against the
+    /// endstop's current cut, quadratic in speed on the bench). A linear
+    /// ramp converges without the limit cycle a binary at-the-wall cut
+    /// produces: the cut flips at one count and the velocity PI's brake
+    /// bounce re-arms it every swing. Retreat is never capped. The accel
+    /// slew below stays the physical enforcer when a config's accel/vel
+    /// ratio disagrees with the ramp slope - the ramp is a reference shape.
+    pub fn step_velocity(&mut self, goal_velocity_cps: i32, theta_hat_q16: i32, cfg: &TrajCfg) {
         let a = (cfg.accel_limit_q88 as i32) << 8;
         let v_cap = cfg.vel_limit_cps.min(VEL_CAP_CPS) as i32;
-        let goal = goal_velocity_cps.clamp(-v_cap, v_cap) << 16;
+        let th = theta_hat_q16 >> 16;
+        let lo = cfg.pos_min_soft_counts.min(cfg.pos_max_soft_counts);
+        let hi = cfg.pos_max_soft_counts.max(cfg.pos_min_soft_counts);
+        // distance pre-clamped so the shift cannot overflow
+        let cap = (VEL_CAP_CPS as i32) >> WALL_RAMP_SHIFT;
+        let allow_up = hi.saturating_sub(th).clamp(0, cap) << WALL_RAMP_SHIFT;
+        let allow_dn = th.saturating_sub(lo).clamp(0, cap) << WALL_RAMP_SHIFT;
+        let goal = goal_velocity_cps
+            .clamp(-v_cap, v_cap)
+            .clamp(-allow_dn, allow_up)
+            << 16;
         let prev = self.omega_ref_q16;
         // goal - prev can span 2^32; saturation past +-a is clamped away
         let omega = prev + goal.saturating_sub(prev).clamp(-a, a);
@@ -361,16 +387,16 @@ mod tests {
         let mut t = TrajGen::new();
         t.reseed(0);
         for k in 1..=10i32 {
-            t.step_velocity(500, &c);
+            t.step_velocity(500, 0, &c);
             assert_eq!(t.omega_star_q16(), (50 * k) << 16);
             assert_eq!(t.alpha_star_q16(), A);
         }
-        t.step_velocity(500, &c);
+        t.step_velocity(500, 0, &c);
         assert_eq!(t.omega_star_q16(), 500 << 16);
         assert_eq!(t.alpha_star_q16(), 0);
         // goal past vel_limit clamps at the limit
         for _ in 0..100 {
-            t.step_velocity(5000, &c);
+            t.step_velocity(5000, 0, &c);
         }
         assert_eq!(t.omega_star_q16(), 1000 << 16);
         // theta tracked the motion
@@ -378,11 +404,40 @@ mod tests {
         // reversal: exactly one accel step per tick through zero
         let mut prev = t.omega_star_q16();
         for _ in 0..40 {
-            t.step_velocity(-5000, &c);
+            t.step_velocity(-5000, 0, &c);
             assert_eq!(prev - t.omega_star_q16(), A);
             prev = t.omega_star_q16();
         }
         assert_eq!(prev, -(1000 << 16));
+    }
+
+    #[test]
+    fn velocity_wall_ramp_caps_inward_goal() {
+        let c = TrajCfg {
+            pos_min_soft_counts: 0,
+            pos_max_soft_counts: 1000,
+            ..cfg(1000, 50 << 8)
+        };
+        let run = |theta: i32, goal: i32| {
+            let mut t = TrajGen::new();
+            for _ in 0..100 {
+                t.step_velocity(goal, theta << 16, &c);
+            }
+            t.omega_star_q16() >> 16
+        };
+        // far from both walls: the vel limit binds
+        assert_eq!(run(500, 5000), 1000);
+        // 50 counts out: 50 << WALL_RAMP_SHIFT binds
+        assert_eq!(run(950, 5000), 800);
+        // at and past the wall: inward goal pinned to 0
+        assert_eq!(run(1000, 5000), 0);
+        assert_eq!(run(1100, 5000), 0);
+        // retreat is never capped, even from past the wall
+        assert_eq!(run(1100, -700), -700);
+        // mirrored at the min wall
+        assert_eq!(run(25, -5000), -400);
+        assert_eq!(run(0, -5000), 0);
+        assert_eq!(run(500, -5000), -1000);
     }
 
     #[test]
@@ -449,7 +504,7 @@ mod tests {
                                 t.step_position(goal, &c);
                                 assert!(t.omega_star_q16().unsigned_abs() <= 32767u32 << 16);
                                 assert!(t.theta_star_q16().unsigned_abs() <= 1 << 29);
-                                t.step_velocity(goal, &c);
+                                t.step_velocity(goal, seed, &c);
                                 assert!(t.omega_star_q16().unsigned_abs() <= 32767u32 << 16);
                                 assert!(t.theta_star_q16().unsigned_abs() <= 1 << 29);
                             }

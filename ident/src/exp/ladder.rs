@@ -23,8 +23,8 @@ pub struct LadderCfg {
     pub seek_duty_q15: i16,
     /// Sweep start/stop distance from the guard edges, counts. OpenLoop
     /// cannot brake: a duty-0 at speed coasts several hundred counts, and
-    /// this absorbs it (bench: the 26% sweep-end coast breached a 600
-    /// margin by 18 counts).
+    /// this absorbs it (bench: the 64% sweep-end coast on a healthy gear
+    /// ran ~970 counts through the rest pause, breaching a 900 margin).
     pub stop_margin: u16,
     pub poll_ms: u32,
     pub seek_poll_ms: u32,
@@ -47,7 +47,7 @@ impl Default for LadderCfg {
             // 26/33/40/47/55/64% of 32767
             rungs_q15: vec![8520, 10813, 13107, 15400, 18022, 20971],
             seek_duty_q15: 8520,
-            stop_margin: 900,
+            stop_margin: 1300,
             poll_ms: 2,
             seek_poll_ms: 30,
             rest_ms: 300,
@@ -461,8 +461,11 @@ mod tests {
         let mut clean = physical_servo();
         let (exp_clean, _) = run_e3(&mut clean, RigParams::default());
         let mut glitched = physical_servo();
-        // +80-count pot artifact strictly inside the masked slip zone
-        glitched.glitch_zone = Some((1300.0, 1500.0));
+        // +80-count pot artifact strictly inside the masked slip zone:
+        // above the sweep-start threshold (band lo + stop_margin) so the
+        // seek geometry matches the clean run, and low enough that the
+        // +80 readings also stay inside the mask
+        glitched.glitch_zone = Some((1460.0, 1560.0));
         let (exp_glitch, _) = run_e3(&mut glitched, RigParams::default());
         let a = exp_clean.fit(3.37).unwrap();
         let b = exp_glitch.fit(3.37).unwrap();

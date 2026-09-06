@@ -9,7 +9,7 @@
 //! CLOCAL|CREAD set and the speed configured - a bare O_NONBLOCK open
 //! reads almost nothing (that combination is what pyserial sets up).
 
-use std::io::Read;
+use std::io::{BufWriter, Read, Write};
 use std::os::fd::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -25,7 +25,7 @@ const IOSSIOSPEED: libc::c_ulong = 0x8004_5402;
 /// sample at exactly this.
 const TEL_BAUD: libc::c_int = 3_000_000;
 
-pub struct TelSink {
+pub(crate) struct TelSink {
     rx: Arc<Mutex<Vec<u8>>>,
     stop: Arc<AtomicBool>,
     bytes: Arc<AtomicU64>,
@@ -35,7 +35,7 @@ pub struct TelSink {
 }
 
 impl TelSink {
-    pub fn open(path: &str, mask: u16) -> Result<Self> {
+    pub(crate) fn open(path: &str, mask: u16, raw_path: Option<&std::path::Path>) -> Result<Self> {
         let mut port = std::fs::OpenOptions::new()
             .read(true)
             .custom_flags(libc::O_NONBLOCK | libc::O_NOCTTY)
@@ -73,6 +73,10 @@ impl TelSink {
             libc::fcntl(fd, libc::F_SETFL, 0);
         }
 
+        // Best-effort: raw capture is a post-mortem artifact, so a file that
+        // fails to create just means no raw copy, never an aborted capture.
+        let raw_writer = raw_path.and_then(|p| std::fs::File::create(p).ok().map(BufWriter::new));
+
         let rx = Arc::new(Mutex::new(Vec::new()));
         let stop = Arc::new(AtomicBool::new(false));
         let bytes = Arc::new(AtomicU64::new(0));
@@ -82,15 +86,22 @@ impl TelSink {
             let bytes = bytes.clone();
             std::thread::spawn(move || {
                 let mut buf = [0u8; 65536];
+                let mut w = raw_writer;
                 while !stop.load(Ordering::Relaxed) {
                     match port.read(&mut buf) {
                         Ok(0) => {}
                         Ok(n) => {
                             bytes.fetch_add(n as u64, Ordering::Relaxed);
                             rx.lock().expect("tel buf").extend_from_slice(&buf[..n]);
+                            if let Some(w) = w.as_mut() {
+                                let _ = w.write_all(&buf[..n]);
+                            }
                         }
                         Err(_) => break,
                     }
+                }
+                if let Some(w) = w.as_mut() {
+                    let _ = w.flush();
                 }
             })
         };
@@ -106,22 +117,22 @@ impl TelSink {
     }
 
     /// Feed everything the reader thread has buffered through the deframer.
-    pub fn drain(&mut self) {
+    pub(crate) fn drain(&mut self) {
         let bytes = std::mem::take(&mut *self.rx.lock().expect("tel buf"));
         if !bytes.is_empty() {
             self.deframer.push(&bytes, &mut self.frames);
         }
     }
 
-    pub fn take_frames(&mut self) -> Vec<TelFrame> {
+    pub(crate) fn take_frames(&mut self) -> Vec<TelFrame> {
         std::mem::take(&mut self.frames)
     }
 
-    pub fn stats(&self) -> TelStats {
+    pub(crate) fn stats(&self) -> TelStats {
         self.deframer.stats()
     }
 
-    pub fn bytes_read(&self) -> u64 {
+    pub(crate) fn bytes_read(&self) -> u64 {
         self.bytes.load(Ordering::Relaxed)
     }
 }

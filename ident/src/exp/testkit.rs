@@ -34,6 +34,9 @@ pub struct FakeServo {
     pub glitch_zone: Option<(f64, f64)>,
     pub pos: f64,
     pub ends: (f64, f64),
+    /// Wiring convention: false inverts duty's effect on motion, so the
+    /// endstop experiment must infer the flipped drive_polarity.
+    pub drive_polarity: bool,
     pub pos_noise: f64,
     pub fault_at_ms: Option<f64>,
     pub torque: bool,
@@ -66,6 +69,7 @@ impl FakeServo {
             glitch_zone: None,
             pos: 2400.0,
             ends: (200.0, 4000.0),
+            drive_polarity: true,
             pos_noise: 0.0,
             fault_at_ms: None,
             torque: false,
@@ -98,17 +102,18 @@ impl FakeServo {
         if !self.torque || self.duty == 0 || self.duty.unsigned_abs() < self.breakaway_q15 as u16 {
             return 0.0;
         }
-        let stalled = (self.pos <= self.ends.0 && self.duty < 0)
-            || (self.pos >= self.ends.1 && self.duty > 0);
+        let vsign = self.duty.signum() as f64 * if self.drive_polarity { 1.0 } else { -1.0 };
+        let stalled =
+            (self.pos <= self.ends.0 && vsign < 0.0) || (self.pos >= self.ends.1 && vsign > 0.0);
         if stalled {
             return 0.0;
         }
         if self.physical_motion {
             let v = self.duty.unsigned_abs() as f64 / 32767.0 * self.vbus;
             let mag = ((v - self.r * self.fc) / (self.ke + self.r * self.fv)).max(0.0);
-            mag * self.duty.signum() as f64
+            mag * vsign
         } else {
-            self.duty as f64 / 32767.0 * self.free_speed
+            self.duty.unsigned_abs() as f64 / 32767.0 * self.free_speed * vsign
         }
     }
 

@@ -50,7 +50,8 @@ pub struct CalibWinding {
 /// Motor identification: `ke_uvs_per_rad` is the host-facing record; the rest
 /// are firmware-shaped -- bemf subtract R (Q4.12), reciprocal Ke (c/s per
 /// vcount Q6.10, estimator::bemf convention), fusion current gain (bakes
-/// Ts/J), the friction model (Coulomb ccounts, viscous Q0.16, breakaway
+/// Ts/J, Q3.13: rig B runs ~3.4 so Q0.16 saturated), the friction model
+/// (Coulomb ccounts, viscous Q0.16, breakaway
 /// ccounts), and forward Ke (vcounts per c/s Q4.12, the current loop's bemf
 /// decoupling feedforward). Forward and reciprocal Ke are both host-written:
 /// the chip has no divide to derive one from the other. SG90 scale ~0.28
@@ -61,11 +62,23 @@ pub struct CalibMotor {
     pub ke_uvs_per_rad: u16,
     pub r_q12: u16,
     pub recip_ke_q: u16,
-    pub b_i_q016: u16,
+    pub b_i_q313: u16,
     pub fric_fc_counts: u16,
     pub fric_fv_q016: u16,
     pub fric_breakaway_counts: u16,
     pub ke_vpc_q: u16,
+}
+
+/// Count<->angle scale and gearing, pure host-facing metadata: firmware never
+/// reads it, the ISR stays in counts. Angles are centi-degrees at the pot LUT
+/// endpoints raw_min/raw_max (which equal pos_min/max_phys); `gear_ratio_centi`
+/// is motor revs per output rev x100. All-zero = unset.
+#[repr(C)]
+#[derive(Copy, Clone, Block)]
+pub struct CalibKinematics {
+    pub angle_min_cdeg: i16,
+    pub angle_max_cdeg: i16,
+    pub gear_ratio_centi: u16,
 }
 
 /// Calibration section: always writable (normal field validation applies),
@@ -81,6 +94,7 @@ pub struct CalibRegs {
     pub sense: CalibSense,
     pub winding: CalibWinding,
     pub motor: CalibMotor,
+    pub kinematics: CalibKinematics,
     #[ct_section(skip)]
-    pub _rsvd_tail: [u8; 102],
+    pub _rsvd_tail: [u8; 96],
 }

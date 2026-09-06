@@ -21,7 +21,7 @@ pub(crate) mod hooks;
 pub mod profile;
 pub mod telemetry;
 
-pub use calib::{CalibMotor, CalibRegs, CalibSense, CalibWinding, PotLutBlock};
+pub use calib::{CalibKinematics, CalibMotor, CalibRegs, CalibSense, CalibWinding, PotLutBlock};
 pub use config::{
     BaudRate, ConfigCommon, ConfigFaultCfg, ConfigFusion, ConfigLimits, ConfigLoopCurrent,
     ConfigLoopPosition, ConfigLoopVelocity, ConfigPosLimits, ConfigRegs, ConfigThermal,
@@ -85,7 +85,12 @@ impl ControlTableCell {
             cfg.common.response_deadline_us = defaults.response_deadline_us;
             // Core-owned safe defaults; gains stay at their zero seed so
             // every loop boots inert. Enum defaults are discriminant 0.
+            // Trajectory limits are clamps, not gains - zero would pin the
+            // profile at 0 and keep the loops inert even once gains land.
             cfg.loop_current.duty_max_q15 = config::DEFAULT_DUTY_MAX_Q15;
+            cfg.loop_position.velocity_limit_cps = config::DEFAULT_VELOCITY_LIMIT_CPS;
+            cfg.loop_position.accel_limit_q88 = config::DEFAULT_ACCEL_LIMIT_Q88;
+            cfg.loop_position.pos_deadband_counts = config::DEFAULT_POS_DEADBAND_COUNTS;
             cfg.limits.current_limit_counts = config::DEFAULT_CURRENT_LIMIT_COUNTS;
             cfg.limits.drive_polarity = config::DEFAULT_DRIVE_POLARITY;
             cfg.limits.stall_omega_max_cps = config::DEFAULT_STALL_OMEGA_MAX_CPS;
@@ -258,7 +263,7 @@ mod tests {
             ])
         );
 
-        // goal_position's bounds are register-RHS (soft limits); they must not
+        // goal_position's bounds are register-RHS (phys limits); they must not
         // export as scalar bounds.
         let goal = by("goal_position");
         assert!(goal.writable);

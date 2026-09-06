@@ -12,6 +12,7 @@ license     = "MIT OR Apache-2.0"
 anyhow       = "1"
 clap         = { version = "4", features = ["derive"] }
 ctrlc        = "3"
+dialoguer    = "0.11"
 libc         = "0.2"
 osc-client   = { path = "../../client" }
 osc-ident    = { path = "../../ident" }

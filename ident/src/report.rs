@@ -13,14 +13,14 @@ use crate::exp::resistance::ResistanceResult;
 use crate::gains::{EncodedGains, GainSet};
 
 /// The board-D rig's hand-eyeballed seeds (kernel band), for the comparison
-/// column. b_i 655 predates the commit-4 rescale (it was inert under the
-/// old shift-16 coupling) and i_ki was eyeballed ~40x low - the rendered
+/// column. b_i 655 predates both coupling rescales (it was inert under the
+/// original shift-16 form) and i_ki was eyeballed ~40x low - the rendered
 /// note says so instead of bending any formula toward them.
 const HAND_SEEDS: [(&str, u16); 8] = [
     ("r_q12", 13800),
     ("recip_ke_q", 5184),
     ("ke_vpc_q", 809),
-    ("b_i_q016", 655),
+    ("b_i_q313", 655),
     ("i_kp_q88", 863),
     ("i_ki_q412", 205),
     ("fric_fc_counts", 20),
@@ -236,7 +236,7 @@ mod tests {
             gains: Some((&g, &e)),
             ..Default::default()
         });
-        assert!(s.contains("b_i_q016"));
+        assert!(s.contains("b_i_q313"));
         assert!(s.contains("x of 13800"), "hand-seed column missing:\n{s}");
         assert!(s.contains("eyeballed ~40x low"));
     }

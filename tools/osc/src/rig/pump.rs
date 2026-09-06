@@ -16,15 +16,15 @@ use osc_ident::regs::{Reg, control, telemetry};
 use super::csvio::SnapshotLog;
 use super::tel::TelSink;
 
-pub static STOP: AtomicBool = AtomicBool::new(false);
+pub(crate) static STOP: AtomicBool = AtomicBool::new(false);
 
-pub fn install_ctrlc() {
+pub(crate) fn install_ctrlc() {
     let _ = ctrlc::set_handler(|| STOP.store(true, Ordering::SeqCst));
 }
 
 /// Write one register, value LE-truncated to the field width (negative
 /// i32 -> correct two's complement for 2/4-byte fields).
-pub fn write_reg(c: &mut Client<NusbPipe>, id: Id, reg: Reg, value: i32) -> Result<()> {
+pub(crate) fn write_reg(c: &mut Client<NusbPipe>, id: Id, reg: Reg, value: i32) -> Result<()> {
     let bytes = value.to_le_bytes();
     c.write(id, reg.addr, &bytes[..reg.width as usize])
         .with_context(|| format!("write addr {:#06x}", reg.addr))?;
@@ -41,7 +41,7 @@ const IDENT_LEN: u16 = telemetry::AGG_SEQ.addr + 2 - IDENT_BASE;
 /// agg_seq agrees is returned (the block is written mid-tick; agg_seq lands
 /// last). Bounded retries - a stubbornly torn read returns the last full
 /// snapshot, which the engine's WindowStream then dedups by seq anyway.
-pub fn read_snapshot(c: &mut Client<NusbPipe>, id: Id) -> Result<TelemetrySnapshot> {
+pub(crate) fn read_snapshot(c: &mut Client<NusbPipe>, id: Id) -> Result<TelemetrySnapshot> {
     let mut last = None;
     for _ in 0..3 {
         let raw = c.read(id, TEL_BASE, TEL_LEN).context("telemetry read")?;
@@ -57,20 +57,23 @@ pub fn read_snapshot(c: &mut Client<NusbPipe>, id: Id) -> Result<TelemetrySnapsh
     Ok(last.expect("loop ran"))
 }
 
-pub struct Pump<'a> {
-    pub client: &'a mut Client<NusbPipe>,
-    pub id: Id,
+pub(crate) struct Pump<'a> {
+    pub(crate) client: &'a mut Client<NusbPipe>,
+    pub(crate) id: Id,
     /// TEL device path; the sink opens on the experiment's tel_enable=1
     /// write and closes (frames flushed) on tel_enable=0.
-    pub tel_port: Option<String>,
-    pub tel_mask: u16,
-    pub log: Option<&'a mut SnapshotLog>,
+    pub(crate) tel_port: Option<String>,
+    pub(crate) tel_mask: u16,
+    pub(crate) log: Option<&'a mut SnapshotLog>,
+    /// Lossless raw-byte capture of the TEL stream, in addition to the live
+    /// deframing; None skips the file (e.g. endstop has no ripple sweep).
+    pub(crate) tel_raw_path: Option<std::path::PathBuf>,
 }
 
 impl Pump<'_> {
     /// Run one experiment to completion. `on_tel` receives decoded TEL
     /// frames as they drain (inertia's push_tel; pass |_| {} otherwise).
-    pub fn run(
+    pub(crate) fn run(
         &mut self,
         exp: &mut dyn Experiment,
         mut on_tel: impl FnMut(&[TelFrame]),
@@ -97,6 +100,7 @@ impl Pump<'_> {
                             sink = Some(TelSink::open(
                                 self.tel_port.as_deref().expect("checked"),
                                 self.tel_mask,
+                                self.tel_raw_path.as_deref(),
                             )?);
                         } else if value == 0
                             && let Some(mut s) = sink.take()

@@ -5,8 +5,10 @@
 //! osc-client -- every choreography lives in the library. Wire measurement is
 //! the bench `tool-*` binaries' job, not this tool's.
 
+mod cal;
 mod descriptor;
 mod ident;
+mod rig;
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
@@ -113,7 +115,7 @@ enum Cmd {
     },
     /// Broadcast CAL break trains (protocol sec 9.3) with per-servo
     /// convergence readback.
-    Cal {
+    Syntonize {
         /// Trains to send (>= 2 per the sec 9.3 boot guidance).
         #[arg(long, default_value_t = 3)]
         trains: u8,
@@ -209,6 +211,12 @@ enum Cmd {
     /// Identify the motor and synthesize its gains: experiments, fits,
     /// write-back.
     Ident(ident::Args),
+    /// Calibrate: find the end-stops, confirm the angle range, write limits +
+    /// polarity + angle endpoints, then SAVE.
+    Cal(cal::Args),
+    /// Replay a saved cal tel-raw.bin offline: classify stream corruption and
+    /// re-run the pot-LUT / motor-rev pipeline without a servo.
+    CalReplay(cal::replay::Args),
 }
 
 #[derive(Subcommand, Debug)]
@@ -687,7 +695,7 @@ fn main() -> Result<()> {
             );
             Ok(())
         }
-        Cmd::Cal {
+        Cmd::Syntonize {
             trains,
             gap_us,
             gaps,
@@ -820,5 +828,7 @@ fn main() -> Result<()> {
         } => set(&mut connect_bus(&cli)?, id, field, value, *hold, *noreply),
         Cmd::Dump => dump(&mut connect_bus(&cli)?, id),
         Cmd::Ident(args) => ident::run(args, cli.baud.clone(), cli.id),
+        Cmd::Cal(args) => cal::run(args, cli.baud.clone(), cli.id),
+        Cmd::CalReplay(a) => cal::replay::run(a),
     }
 }

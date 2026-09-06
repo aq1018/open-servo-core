@@ -368,8 +368,16 @@ pub struct VerifyVelocityCfg {
     pub poll_ms: u32,
     pub rest_ms: u32,
     pub seek_poll_ms: u32,
-    /// Travel margin off each guard edge where a leg turns around.
+    /// Travel margin off each guard edge where a leg turns around. Wide
+    /// enough that goal-0 braking on unproven gains stays inside the
+    /// guard through the rest pause (no envelope read until the next leg).
     pub margin: u16,
+    /// Park distance off the low guard edge for the open-loop seek.
+    /// Separate from `margin`: the seek cannot brake, and the coast after
+    /// seek-off runs through the mode-switch writes with no envelope read
+    /// in between (bench: a 26% seek parked at margin 350 coasted into
+    /// the low rail and the first leg read aborted at pos 8).
+    pub seek_margin: u16,
     /// Head trim before the slope fit (trajectory accel ramp), ms.
     pub accel_trim_ms: f64,
     pub tol: f64,
@@ -385,7 +393,8 @@ impl Default for VerifyVelocityCfg {
             poll_ms: 4,
             rest_ms: 300,
             seek_poll_ms: 30,
-            margin: 350,
+            margin: 550,
+            seek_margin: 1300,
             accel_trim_ms: 250.0,
             tol: 0.15,
             leg_cap_polls: 4000,
@@ -565,7 +574,7 @@ impl Experiment for VerifyVelocity {
             VPhase::SeekEval => {
                 let mut parked = false;
                 if let Some(o) = obs {
-                    parked = o.pos <= self.band.0 + self.cfg.margin;
+                    parked = o.pos <= self.band.0 + self.cfg.seek_margin;
                     if let Some(last) = self.last_pos
                         && o.pos.abs_diff(last) <= 3
                     {

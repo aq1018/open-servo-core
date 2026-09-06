@@ -20,9 +20,11 @@
 
 pub mod bias;
 pub mod breakaway;
+pub mod endstop;
 pub mod inertia;
 pub mod ladder;
 pub mod resistance;
+pub mod sweep;
 pub mod verify;
 
 use crate::frame::{SeqUnwrap, TelemetrySnapshot};
@@ -63,6 +65,11 @@ pub struct RigParams {
     pub settle_windows: u32,
     /// One ident aggregate window in ms: 16 fast ticks at ~20 kHz.
     pub agg_period_ms: f64,
+    /// End-stop stall detect: a seek read whose pos moved <= `stall_eps`
+    /// counts from the prior one counts as still; `stall_polls` consecutive
+    /// still reads declare the mechanical rail.
+    pub stall_eps: u16,
+    pub stall_polls: u32,
 }
 
 impl Default for RigParams {
@@ -73,6 +80,8 @@ impl Default for RigParams {
             slip: (1250, 1650),
             settle_windows: 5,
             agg_period_ms: 0.8,
+            stall_eps: 3,
+            stall_polls: 8,
         }
     }
 }

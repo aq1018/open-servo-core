@@ -4,14 +4,12 @@
 //! snapshot/rollback safety. The sans-io engine lives in osc-ident; this
 //! wrapper owns USB, the TEL serial port, wall time, and files.
 
-mod csvio;
-mod params;
-mod pump;
-mod snapshot;
-mod tel;
+pub(crate) mod params;
 
 use std::path::PathBuf;
 
+use crate::rig::pump::{self, Pump, write_reg};
+use crate::rig::{csvio, snapshot};
 use anyhow::{Context, Result, bail};
 use clap::Subcommand;
 use osc_client::Id;
@@ -34,7 +32,6 @@ use params::{
     BiasJson, BreakawayJson, GainJson, InertiaJson, LadderJson, ParamsFile, PlantJson,
     ResistanceJson, SenseJson,
 };
-use pump::{Pump, write_reg};
 
 /// The `osc ident` arg group: TEL wiring, output, rig envelope, and
 /// bandwidth targets, all scoped to the ident subtree. `--baud`/`--id` come
@@ -152,7 +149,7 @@ pub fn run(args: &Args, baud: String, id: u8) -> Result<()> {
     if let Cmd::Fit { dir } = &args.cmd {
         return fit_dir(&cli, dir.clone());
     }
-    let mut c = connect(&cli)?;
+    let mut c = crate::rig::connect(&cli.baud)?;
     let id = Id::new(id);
     match &args.cmd {
         Cmd::Run => run_all(&cli, &mut c, id),
@@ -241,26 +238,6 @@ pub fn run(args: &Args, baud: String, id: u8) -> Result<()> {
         Cmd::Show => snapshot::show(&mut c, id),
         Cmd::Fit { .. } => unreachable!("handled above"),
     }
-}
-
-fn connect(cli: &Ctx) -> Result<Client<NusbPipe>> {
-    let mut c = Client::connect(NusbPipe::open()?)?;
-    match cli.baud.as_str() {
-        "auto" => match c.find_bus_baud()? {
-            Some(rate) => println!("bus at {} baud", rate.as_hz()),
-            None => bail!("no servo bus found at any supported baud"),
-        },
-        s => {
-            use osc_client::BaudRate as B;
-            let bps: u32 = s.parse().context("baud is an integer rate or `auto`")?;
-            let rate = [B::B500000, B::B1000000, B::B2000000, B::B3000000]
-                .into_iter()
-                .find(|r| r.as_hz() == bps)
-                .ok_or_else(|| anyhow::anyhow!("unsupported baud {bps}"))?;
-            c.host_baud(rate)?;
-        }
-    }
-    Ok(c)
 }
 
 fn rig(cli: &Ctx) -> RigParams {
@@ -361,6 +338,7 @@ fn run_bias(
             tel_port: None,
             tel_mask: 0,
             log: Some(&mut log),
+            tel_raw_path: None,
         }
         .run(&mut exp, |_| {})
     })?;
@@ -390,6 +368,7 @@ fn run_resistance(
             tel_port: None,
             tel_mask: 0,
             log: Some(&mut log),
+            tel_raw_path: None,
         }
         .run(&mut exp, |_| {})
     })?;
@@ -418,6 +397,7 @@ fn run_breakaway(
             tel_port: None,
             tel_mask: 0,
             log: Some(&mut log),
+            tel_raw_path: None,
         }
         .run(&mut exp, |_| {})
     })?;
@@ -444,6 +424,7 @@ fn run_ladder(
             tel_port: None,
             tel_mask: 0,
             log: Some(&mut log),
+            tel_raw_path: None,
         }
         .run(&mut exp, |_| {})
     })?;
@@ -487,6 +468,7 @@ fn run_inertia(
             tel_port: (!cli.tel_port.is_empty()).then(|| cli.tel_port.clone()),
             tel_mask: 0x1B,
             log: Some(&mut log),
+            tel_raw_path: None,
         };
         // split borrow: hand frames to the guarded experiment mid-run
         let exp_cell = std::cell::RefCell::new(&mut exp);
@@ -533,11 +515,15 @@ fn run_verify(cli: &Ctx, c: &mut Client<NusbPipe>, id: Id) -> Result<()> {
             tel_port: None,
             tel_mask: 0,
             log: None,
+            tel_raw_path: None,
         }
         .run(&mut e5, |_| {})
     })?;
     check_abort("verify-current", e5.abort())?;
     let cur = e5.into_inner().result();
+    // E5 ends stalled against an end-stop; E6 runs with the pos guard on
+    // and its first read would abort right there
+    recenter(c, id)?;
     println!("[E6 velocity legs]");
     let mut e6 = Guarded::new(
         VerifyVelocity::new(VerifyVelocityCfg::default(), &params, tick_hz),
@@ -550,6 +536,7 @@ fn run_verify(cli: &Ctx, c: &mut Client<NusbPipe>, id: Id) -> Result<()> {
             tel_port: None,
             tel_mask: 0,
             log: None,
+            tel_raw_path: None,
         }
         .run(&mut e6, |_| {})
     })?;

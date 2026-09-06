@@ -4,17 +4,26 @@
 //! updates (current.rs / velocity.rs / fusion.rs) and is the authority on
 //! stability - the placement formulas are only as good as those runs.
 //!
-//! Q formats (verified against firmware/lib/core, commit-4 fusion encoding):
+//! Q formats (verified against firmware/lib/core, Q3.13 fusion coupling):
 //! i_kp_q88 vcounts/ccount; i_ki/i_kaw_q412 per FAST tick; v_kp_q88
 //! ccounts per c/s; v_ki/v_kaw_q412 per MEDIUM tick; j_ff_q88 = 256/B;
 //! p_kp_q88 c/s per count; l1_q016; l2_q88 c/s per count; l3_q88 cc per
-//! count; b_i_q016 = round(B*65536); r_q12/ke_vpc_q Q4.12; recip_ke_q
-//! Q6.10; fric_fv_q016 Q0.16; fric_fc/breakaway whole ccounts.
+//! count; b_i_q313 = round(B*8192) (rig B runs ~3.4, Q0.16 saturated);
+//! r_q12/ke_vpc_q Q4.12; recip_ke_q Q6.10; fric_fv_q016 Q0.16;
+//! fric_fc/breakaway whole ccounts.
 
 /// Bench model-card inductance (SG90 clone donor motor), henries. L is not
 /// identifiable from the fixed-phase shunt sampling - this is the CLI
 /// `--l-henries` default.
 pub const DEFAULT_L_HENRIES: f64 = 0.5e-3;
+
+/// Anti-hunt deadband policy. The deadband must exceed pot-noise excursions
+/// or the hold chatters (bench: 16 counts held clean at sigma 6.9 = 2.3
+/// sigma). Hold coasts on position rest alone (firmware position.rs), so the
+/// only synthesized field is the deadband; the floor keeps a suspiciously
+/// quiet E0 from synthesizing a deadband too tight to engage.
+const DEADBAND_SIGMA_MULT: f64 = 2.5;
+const DEADBAND_FLOOR_COUNTS: f64 = 4.0;
 
 /// SI inductance -> count domain. vcounts and ccounts share the ADC lsb
 /// (both channels reference VDD), so it cancels and only the front-end
@@ -102,6 +111,9 @@ pub struct GainSet {
     /// Projected omega noise from the pot, c/s: l2 * sigma_theta per
     /// correct step - report fodder, not a table field.
     pub omega_noise_cps: f64,
+    /// Anti-hunt park window, counts: noise-derived lower bound (an
+    /// application may widen it for a softer, quieter hold).
+    pub pos_deadband: f64,
 }
 
 /// Pole placement.
@@ -165,6 +177,7 @@ pub fn synthesize(p: &PlantParams, t: &BwTargets) -> GainSet {
         fric_fv: p.fv,
         fric_breakaway: 0.0,
         omega_noise_cps: l2 * p.sigma_theta,
+        pos_deadband: (DEADBAND_SIGMA_MULT * p.sigma_theta).max(DEADBAND_FLOOR_COUNTS),
     }
 }
 
@@ -215,10 +228,11 @@ pub struct EncodedGains {
     pub v_kaw_q412: Encoded,
     pub j_ff_q88: Encoded,
     pub p_kp_q88: Encoded,
+    pub pos_deadband_counts: Encoded,
     pub l1_q016: Encoded,
     pub l2_q88: Encoded,
     pub l3_q88: Encoded,
-    pub b_i_q016: Encoded,
+    pub b_i_q313: Encoded,
     pub r_q12: Encoded,
     pub ke_vpc_q: Encoded,
     pub recip_ke_q: Encoded,
@@ -230,12 +244,12 @@ pub struct EncodedGains {
 impl EncodedGains {
     /// (name, field) pairs in table-write order - the report and the CLI
     /// write-back both iterate this.
-    pub fn fields(&self) -> [(&'static str, Encoded); 18] {
+    pub fn fields(&self) -> [(&'static str, Encoded); 19] {
         [
             ("r_q12", self.r_q12),
             ("ke_vpc_q", self.ke_vpc_q),
             ("recip_ke_q", self.recip_ke_q),
-            ("b_i_q016", self.b_i_q016),
+            ("b_i_q313", self.b_i_q313),
             ("fric_fc_counts", self.fric_fc_counts),
             ("fric_fv_q016", self.fric_fv_q016),
             ("fric_breakaway_counts", self.fric_breakaway_counts),
@@ -247,6 +261,7 @@ impl EncodedGains {
             ("v_kaw_q412", self.v_kaw_q412),
             ("j_ff_q88", self.j_ff_q88),
             ("p_kp_q88", self.p_kp_q88),
+            ("pos_deadband_counts", self.pos_deadband_counts),
             ("l1_q016", self.l1_q016),
             ("l2_q88", self.l2_q88),
             ("l3_q88", self.l3_q88),
@@ -264,10 +279,11 @@ pub fn encode(g: &GainSet) -> EncodedGains {
         v_kaw_q412: enc(g.v_kaw, 4096.0),
         j_ff_q88: enc(g.j_ff, 256.0),
         p_kp_q88: enc(g.p_kp, 256.0),
+        pos_deadband_counts: enc(g.pos_deadband, 1.0),
         l1_q016: enc(g.l1, 65536.0),
         l2_q88: enc(g.l2, 256.0),
         l3_q88: enc(g.l3, 256.0),
-        b_i_q016: enc(g.b, 65536.0),
+        b_i_q313: enc(g.b, 8192.0),
         r_q12: enc(g.r_vpc, 4096.0),
         ke_vpc_q: enc(g.ke_vpc, 4096.0),
         recip_ke_q: enc(g.recip_ke, 1024.0),
@@ -321,11 +337,11 @@ mod tests {
             assert!(!f.saturated, "{name} saturated: {f:?}");
             assert!(f.quantization_pct < 5.0, "{name} quant {f:?}");
         }
-        // B too big for Q0.16 saturates and flags, never wraps
-        let big = GainSet { b: 1.5, ..g };
+        // B too big for Q3.13 saturates and flags, never wraps
+        let big = GainSet { b: 9.0, ..g };
         let e = encode(&big);
-        assert_eq!(e.b_i_q016.raw, u16::MAX);
-        assert!(e.b_i_q016.saturated);
+        assert_eq!(e.b_i_q313.raw, u16::MAX);
+        assert!(e.b_i_q313.saturated);
         // negative clamps to zero flagged
         let neg = GainSet { fric_fc: -3.0, ..g };
         assert!(encode(&neg).fric_fc_counts.saturated);
@@ -344,9 +360,22 @@ mod tests {
         assert!(g.l1 > 0.05 && g.l1 < 0.5, "l1={}", g.l1);
         assert!(g.l2 > 1.0 && g.l2 < 50.0, "l2={}", g.l2);
         assert!(g.l3 > 0.1 && g.l3 < 20.0, "l3={}", g.l3);
+        // sigma 1.0: the deadband sits on its floor
+        assert_eq!(g.pos_deadband, DEADBAND_FLOOR_COUNTS);
+        // rig-scale noise: the noise-derived deadband clears the floor
+        let noisy = PlantParams {
+            sigma_theta: 6.9,
+            ..rig_plant()
+        };
+        let g = synthesize(&noisy, &BwTargets::default());
+        assert!(
+            (g.pos_deadband - 2.5 * 6.9).abs() < 1e-9,
+            "deadband={}",
+            g.pos_deadband
+        );
     }
 
-    /// Mirror of estimator/fusion.rs (commit-4 encoding), integer-exact.
+    /// Mirror of estimator/fusion.rs (Q3.13 b_i coupling), integer-exact.
     struct FusionMirror {
         theta: i32,
         omega: i32,
@@ -389,7 +418,7 @@ mod tests {
                 .clamp(-ACCEL_LIM, ACCEL_LIM);
             self.omega = self
                 .omega
-                .saturating_add(q_mul(g.b_i as i32, accel, 0))
+                .saturating_add(q_mul(g.b_i as i32, accel, 0).saturating_mul(1 << 3))
                 .clamp(-OMEGA_LIM, OMEGA_LIM);
             self.theta = self
                 .theta
@@ -413,7 +442,7 @@ mod tests {
 
     fn fusion_raw(e: &EncodedGains) -> FusionRaw {
         FusionRaw {
-            b_i: e.b_i_q016.raw,
+            b_i: e.b_i_q313.raw,
             l1: e.l1_q016.raw,
             l2: e.l2_q88.raw,
             l3: e.l3_q88.raw,

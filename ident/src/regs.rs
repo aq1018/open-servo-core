@@ -15,6 +15,10 @@ const fn reg(addr: u16, width: u8) -> Reg {
 pub mod config {
     use super::{Reg, reg};
 
+    pub const POS_MIN_PHYS_COUNTS: Reg = reg(0x0020, 4);
+    pub const POS_MAX_PHYS_COUNTS: Reg = reg(0x0024, 4);
+    pub const POS_MIN_SOFT_COUNTS: Reg = reg(0x0028, 4);
+    pub const POS_MAX_SOFT_COUNTS: Reg = reg(0x002c, 4);
     pub const I_KP_Q88: Reg = reg(0x0030, 2);
     pub const I_KI_Q412: Reg = reg(0x0032, 2);
     pub const I_KAW_Q412: Reg = reg(0x0034, 2);
@@ -24,16 +28,24 @@ pub mod config {
     pub const V_KAW_Q412: Reg = reg(0x003c, 2);
     pub const J_FF_Q88: Reg = reg(0x003e, 2);
     pub const P_KP_Q88: Reg = reg(0x0040, 2);
-    pub const CURRENT_LIMIT_COUNTS: Reg = reg(0x004a, 2);
-    pub const V_UNDERVOLT_COUNTS: Reg = reg(0x0062, 2);
-    pub const L1_Q016: Reg = reg(0x0068, 2);
-    pub const L2_Q88: Reg = reg(0x006a, 2);
-    pub const L3_Q88: Reg = reg(0x006c, 2);
-    pub const L_BEMF_Q016: Reg = reg(0x006e, 2);
+    pub const POS_DEADBAND_COUNTS: Reg = reg(0x0042, 2);
+    pub const CURRENT_LIMIT_COUNTS: Reg = reg(0x0048, 2);
+    pub const DRIVE_POLARITY: Reg = reg(0x004b, 1);
+    pub const V_UNDERVOLT_COUNTS: Reg = reg(0x0060, 2);
+    pub const L1_Q016: Reg = reg(0x0066, 2);
+    pub const L2_Q88: Reg = reg(0x0068, 2);
+    pub const L3_Q88: Reg = reg(0x006a, 2);
+    pub const L_BEMF_Q016: Reg = reg(0x006c, 2);
 }
 
 pub mod calib {
     use super::{Reg, reg};
+
+    // PotLutBlock: the first CALIB block. lut_corr is a 110-byte Bytes field
+    // written as one blob, so it stays out of the scalar ALL cross-check.
+    pub const POT_LUT_RAW_MIN: Reg = reg(0x0080, 2);
+    pub const POT_LUT_RAW_MAX: Reg = reg(0x0082, 2);
+    pub const POT_LUT_CORR: Reg = reg(0x0084, 110);
 
     pub const SHUNT_R_MOHM: Reg = reg(0x00f2, 2);
     pub const GAIN_MILLI: Reg = reg(0x00f4, 2);
@@ -47,11 +59,14 @@ pub mod calib {
     pub const T0_CC: Reg = reg(0x0104, 2);
     pub const R_Q12: Reg = reg(0x010c, 2);
     pub const RECIP_KE_Q: Reg = reg(0x010e, 2);
-    pub const B_I_Q016: Reg = reg(0x0110, 2);
+    pub const B_I_Q313: Reg = reg(0x0110, 2);
     pub const FRIC_FC_COUNTS: Reg = reg(0x0112, 2);
     pub const FRIC_FV_Q016: Reg = reg(0x0114, 2);
     pub const FRIC_BREAKAWAY_COUNTS: Reg = reg(0x0116, 2);
     pub const KE_VPC_Q: Reg = reg(0x0118, 2);
+    pub const ANGLE_MIN_CDEG: Reg = reg(0x011a, 2);
+    pub const ANGLE_MAX_CDEG: Reg = reg(0x011c, 2);
+    pub const GEAR_RATIO_CENTI: Reg = reg(0x011e, 2);
 }
 
 pub mod control {
@@ -100,6 +115,10 @@ pub mod telemetry {
 /// Every const above with its descriptor field name - the cross-check
 /// test's worklist, and a name lookup for reports.
 pub const ALL: &[(&str, Reg)] = &[
+    ("pos_min_phys_counts", config::POS_MIN_PHYS_COUNTS),
+    ("pos_max_phys_counts", config::POS_MAX_PHYS_COUNTS),
+    ("pos_min_soft_counts", config::POS_MIN_SOFT_COUNTS),
+    ("pos_max_soft_counts", config::POS_MAX_SOFT_COUNTS),
     ("i_kp_q88", config::I_KP_Q88),
     ("i_ki_q412", config::I_KI_Q412),
     ("i_kaw_q412", config::I_KAW_Q412),
@@ -109,12 +128,18 @@ pub const ALL: &[(&str, Reg)] = &[
     ("v_kaw_q412", config::V_KAW_Q412),
     ("j_ff_q88", config::J_FF_Q88),
     ("p_kp_q88", config::P_KP_Q88),
+    ("pos_deadband_counts", config::POS_DEADBAND_COUNTS),
     ("current_limit_counts", config::CURRENT_LIMIT_COUNTS),
+    ("drive_polarity", config::DRIVE_POLARITY),
     ("v_undervolt_counts", config::V_UNDERVOLT_COUNTS),
     ("l1_q016", config::L1_Q016),
     ("l2_q88", config::L2_Q88),
     ("l3_q88", config::L3_Q88),
     ("l_bemf_q016", config::L_BEMF_Q016),
+    // lut_corr omitted: a 110-byte Bytes field, not a scalar reg (write_reg
+    // and reg_by_name assume width <= 4); raw_min/raw_max are plain u16.
+    ("raw_min", calib::POT_LUT_RAW_MIN),
+    ("raw_max", calib::POT_LUT_RAW_MAX),
     ("shunt_r_mohm", calib::SHUNT_R_MOHM),
     ("gain_milli", calib::GAIN_MILLI),
     ("vmotor_div_top", calib::VMOTOR_DIV_TOP),
@@ -127,11 +152,14 @@ pub const ALL: &[(&str, Reg)] = &[
     ("t0_cc", calib::T0_CC),
     ("r_q12", calib::R_Q12),
     ("recip_ke_q", calib::RECIP_KE_Q),
-    ("b_i_q016", calib::B_I_Q016),
+    ("b_i_q313", calib::B_I_Q313),
     ("fric_fc_counts", calib::FRIC_FC_COUNTS),
     ("fric_fv_q016", calib::FRIC_FV_Q016),
     ("fric_breakaway_counts", calib::FRIC_BREAKAWAY_COUNTS),
     ("ke_vpc_q", calib::KE_VPC_Q),
+    ("angle_min_cdeg", calib::ANGLE_MIN_CDEG),
+    ("angle_max_cdeg", calib::ANGLE_MAX_CDEG),
+    ("gear_ratio_centi", calib::GEAR_RATIO_CENTI),
     ("torque_enable", control::TORQUE_ENABLE),
     ("tel_enable", control::TEL_ENABLE),
     ("tel_mask", control::TEL_MASK),
